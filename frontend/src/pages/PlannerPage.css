@@ -1,0 +1,238 @@
+.planner-page {
+  animation: fadeIn 0.5s ease-in;
+}
+
+.planner-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.planner-header h1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 36px;
+  color: #047857;
+  margin-bottom: 12px;
+}
+
+.planner-header p {
+  font-size: 18px;
+  color: #6b7280;
+}
+
+.planner-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.planner-actions button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.no-plans {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.no-plans svg {
+  color: #d1d5db;
+  margin-bottom: 24px;
+}
+
+.no-plans h2 {
+  color: #047857;
+  margin-bottom: 12px;
+}
+
+.no-plans p {
+  color: #6b7280;
+}
+
+.meal-plans {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.date-group {
+  overflow: hidden;
+}
+
+.date-header {
+  font-size: 20px;
+  color: #047857;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #dcfce7;
+}
+
+.meals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.meal-plan-item {
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  transition: border-color 0.2s;
+}
+
+.meal-plan-item:hover {
+  border-color: #10b981;
+}
+
+.meal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.meal-type {
+  font-weight: 600;
+  color: #10b981;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.delete-btn {
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.delete-btn:hover {
+  background-color: #fee2e2;
+}
+
+.meal-recipe h4 {
+  font-size: 16px;
+  color: #047857;
+  margin-bottom: 8px;
+}
+
+.meal-recipe p {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.no-recipe {
+  font-size: 14px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Modals */
+.add-modal,
+.shopping-list-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #047857;
+  margin-bottom: 24px;
+  font-size: 24px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.shopping-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.shopping-items li {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  gap: 16px;
+}
+
+.item-amount {
+  font-weight: 600;
+  color: #10b981;
+  white-space: nowrap;
+}
+
+.item-name {
+  color: #374151;
+  flex: 1;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 18px;
+  color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .planner-header h1 {
+    font-size: 28px;
+  }
+
+  .meals-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-actions {
+    flex-direction: column;
+  }
+
+  .planner-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
