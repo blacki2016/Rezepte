@@ -12,6 +12,7 @@ function PlannerPage() {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedMealType, setSelectedMealType] = useState('lunch');
   const [selectedRecipe, setSelectedRecipe] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -36,8 +37,11 @@ function PlannerPage() {
     e.preventDefault();
     
     if (!selectedDate || !selectedMealType) {
+      setError('Bitte wähle ein Datum und eine Mahlzeit aus');
       return;
     }
+
+    setError('');
 
     try {
       await plannerAPI.create({
@@ -50,8 +54,10 @@ function PlannerPage() {
       setShowAddModal(false);
       setSelectedDate('');
       setSelectedRecipe('');
+      setError('');
     } catch (error) {
       console.error('Error adding meal plan:', error);
+      setError('Fehler beim Hinzufügen des Essensplans');
     }
   };
 
@@ -254,6 +260,12 @@ function PlannerPage() {
                     ))}
                   </select>
                 </div>
+
+                {error && (
+                  <div className="alert alert-error" style={{ marginTop: '16px' }}>
+                    {error}
+                  </div>
+                )}
 
                 <div className="modal-actions">
                   <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>

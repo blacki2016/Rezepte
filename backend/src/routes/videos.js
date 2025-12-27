@@ -16,12 +16,29 @@ router.post('/process', async (req, res) => {
       });
     }
 
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch (e) {
+      return res.status(400).json({ 
+        error: 'Invalid URL format' 
+      });
+    }
+
+    // Validate platform
+    if (platform !== 'tiktok' && platform !== 'instagram') {
+      return res.status(400).json({ 
+        error: 'Platform must be either "tiktok" or "instagram"' 
+      });
+    }
+
     // For demo purposes, we'll use mock data
     // In production, you would:
-    // 1. Download the video from TikTok/Instagram
-    // 2. Extract audio from the video
-    // 3. Transcribe the audio
-    // 4. Use AI to extract recipe information
+    // 1. Validate URL is from allowed domains (tiktok.com, instagram.com)
+    // 2. Download the video from TikTok/Instagram
+    // 3. Extract audio from the video
+    // 4. Transcribe the audio
+    // 5. Use AI to extract recipe information
     
     let videoInfo;
     if (platform === 'tiktok') {
