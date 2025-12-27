@@ -75,10 +75,16 @@ router.post('/process', async (req, res) => {
       
       // Enhance recipe with video metadata if available
       if (videoMetaInfo) {
-        if (!recipe.title || recipe.title === 'Pasta Carbonara') {
-          // If recipe title is generic, try to use video title
-          recipe.title = videoMetaInfo.title || recipe.title;
+        // Use video title if available and recipe title seems generic
+        const genericTitles = ['Pasta Carbonara', 'Rezept', 'Recipe', 'Video'];
+        const isGenericTitle = genericTitles.some(title => 
+          recipe.title?.toLowerCase().includes(title.toLowerCase())
+        );
+        
+        if (isGenericTitle && videoMetaInfo.title) {
+          recipe.title = videoMetaInfo.title;
         }
+        
         recipe.videoMetadata = {
           title: videoMetaInfo.title,
           description: videoMetaInfo.description,

@@ -12,7 +12,9 @@ class AIService {
       this.openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY
       });
+      console.log('OpenAI initialized');
     } else {
+      console.warn('OpenAI API key not found. OpenAI features will not be available.');
       this.openai = null;
     }
     
@@ -20,8 +22,9 @@ class AIService {
     if (process.env.GEMINI_API_KEY) {
       this.gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
       this.geminiModel = this.gemini.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      console.log('Gemini initialized');
     } else {
-      console.warn('Gemini API key not found.');
+      console.warn('Gemini API key not found. Gemini features will not be available.');
       this.gemini = null;
       this.geminiModel = null;
     }
@@ -119,8 +122,17 @@ Antworte NUR mit dem JSON-Objekt, ohne zusätzliche Erklärungen, Markdown-Forma
     const response = await result.response;
     let recipeText = response.text();
     
-    // Clean up the response - remove markdown code blocks if present
-    recipeText = recipeText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    // Clean up the response - remove markdown code blocks if present at start/end
+    recipeText = recipeText.trim();
+    if (recipeText.startsWith('```json')) {
+      recipeText = recipeText.substring(7); // Remove ```json
+    } else if (recipeText.startsWith('```')) {
+      recipeText = recipeText.substring(3); // Remove ```
+    }
+    if (recipeText.endsWith('```')) {
+      recipeText = recipeText.substring(0, recipeText.length - 3); // Remove trailing ```
+    }
+    recipeText = recipeText.trim();
     
     const recipe = JSON.parse(recipeText);
     return recipe;
