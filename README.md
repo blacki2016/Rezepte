@@ -135,6 +135,29 @@ Rezepte/
 - **Nährwertinformationen**: Automatische Berechnung von Kalorien und Nährwerten
 - **Smart Einkaufsliste**: Automatische Aggregation von Zutaten aus Wochenplan
 
+## Sicherheitshinweise 🔒
+
+Für den Produktionseinsatz sollten folgende Sicherheitsmaßnahmen implementiert werden:
+
+1. **Rate Limiting**: Implementiere Rate Limiting für alle API-Endpoints
+   ```javascript
+   const rateLimit = require('express-rate-limit');
+   
+   const limiter = rateLimit({
+     windowMs: 15 * 60 * 1000, // 15 minutes
+     max: 100 // limit each IP to 100 requests per windowMs
+   });
+   
+   app.use('/api/', limiter);
+   ```
+
+2. **Input Validation**: Validiere alle Benutzereingaben
+3. **HTTPS**: Verwende HTTPS in der Produktion
+4. **CORS**: Konfiguriere CORS für spezifische Domains
+5. **Authentifizierung**: Implementiere Benutzer-Authentifizierung für persönliche Daten
+
+Weitere Details in [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Beitragen 🤝
 
 Contributions sind willkommen! Bitte erstelle einen Pull Request oder öffne ein Issue.
