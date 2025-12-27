@@ -90,6 +90,30 @@ class VideoProcessingService {
   }
 
   /**
+   * Get video information including title and description
+   */
+  async getVideoInfo(url) {
+    try {
+      const output = await ytDlpExec(url, {
+        dumpSingleJson: true,
+        noCheckCertificates: true,
+        noWarnings: true,
+        skipDownload: true
+      });
+      
+      return {
+        title: output.title || '',
+        description: output.description || '',
+        uploader: output.uploader || '',
+        duration: output.duration || 0
+      };
+    } catch (error) {
+      console.error('Error getting video info:', error);
+      return null;
+    }
+  }
+
+  /**
    * Process TikTok video URL
    */
   async processTikTokVideo(url) {

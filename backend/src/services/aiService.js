@@ -221,6 +221,60 @@ Mit Pfeffer würzen und sofort servieren.
   }
 
   /**
+   * Extract recipe from video description/title
+   * Useful as a fallback when audio transcription is not available
+   */
+  async extractRecipeFromDescription(title, description) {
+    const combinedText = `Titel: ${title}\n\nBeschreibung: ${description}`;
+    
+    // Use Gemini or OpenAI to extract recipe from description
+    if (this.geminiModel && this.aiProvider === 'gemini') {
+      try {
+        const prompt = `
+Extrahiere ein Rezept aus dem folgenden Video-Titel und der Beschreibung.
+Wenn nicht genug Informationen vorhanden sind, erstelle ein plausibles Rezept basierend auf dem Kontext.
+
+${combinedText}
+
+Erstelle ein strukturiertes Rezept im JSON-Format mit:
+- title, description, prepTime, cookTime, servings, difficulty
+- ingredients: Array mit "amount", "unit", "item"
+- instructions: Array mit "step" und "text"
+- tags und category
+
+Antworte NUR mit dem JSON-Objekt.
+`;
+        const result = await this.geminiModel.generateContent(prompt);
+        const response = await result.response;
+        let recipeText = response.text().replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        return JSON.parse(recipeText);
+      } catch (error) {
+        console.error('Error extracting recipe from description with Gemini:', error);
+      }
+    }
+    
+    if (this.openai) {
+      try {
+        const prompt = `Extrahiere ein Rezept aus: ${combinedText}\n\nAntworte nur mit JSON.`;
+        const completion = await this.openai.chat.completions.create({
+          model: 'gpt-4',
+          messages: [
+            { role: 'system', content: 'Extrahiere Rezeptinformationen aus Texten als JSON.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 2000
+        });
+        return JSON.parse(completion.choices[0].message.content);
+      } catch (error) {
+        console.error('Error extracting recipe from description with OpenAI:', error);
+      }
+    }
+    
+    return null;
+  }
+
+  /**
    * Process video and extract recipe
    */
   async processVideoForRecipe(audioPath) {

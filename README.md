@@ -6,12 +6,14 @@ Eine moderne Web-Anwendung, mit der du Rezept-Videos von TikTok und Instagram Re
 
 ### 🎥 Social Media Integration
 - Importiere Rezept-Videos direkt von TikTok und Instagram Reels
+- Automatischer Video-Download mit yt-dlp
 - Einfach URL einfügen - die App erledigt den Rest
 
-### 🤖 KI-Audio-Analyse
-- Automatische Audio-Extraktion aus Videos
-- Speech-to-Text Transkription mit OpenAI Whisper
-- Intelligente Rezept-Extraktion mit GPT-4
+### 🤖 KI-Powered Rezept-Extraktion
+- Automatische Audio-Extraktion aus Videos mit FFmpeg
+- Speech-to-Text Transkription (OpenAI Whisper - optional)
+- Intelligente Rezept-Extraktion mit Google Gemini oder GPT-4
+- Fallback auf Video-Titel/Beschreibung wenn Audio nicht verfügbar
 - Strukturierte Ausgabe mit Zutaten, Schritten, Zeiten und mehr
 
 ### 📖 Rezept-Verwaltung
@@ -36,7 +38,10 @@ Eine moderne Web-Anwendung, mit der du Rezept-Videos von TikTok und Instagram Re
 
 ### Backend
 - **Node.js** mit Express
-- **OpenAI API** (Whisper für Transkription, GPT-4 für Rezept-Extraktion)
+- **Google Gemini API** (primär) oder **OpenAI API** (fallback) für KI-Funktionen
+  - Gemini 1.5 Flash für Rezept-Extraktion aus Text
+  - OpenAI Whisper für Audio-Transkription (optional)
+- **yt-dlp** für Video-Downloads von TikTok und Instagram
 - **FFmpeg** für Video- und Audio-Verarbeitung
 - In-Memory-Speicher (kann leicht auf MongoDB umgestellt werden)
 - RESTful API-Design
@@ -53,7 +58,8 @@ Eine moderne Web-Anwendung, mit der du Rezept-Videos von TikTok und Instagram Re
 
 ### Voraussetzungen
 - Node.js 18+ und npm
-- OpenAI API Key (für Produktionsumgebung)
+- Google Gemini API Key (empfohlen) oder OpenAI API Key
+- yt-dlp wird automatisch installiert
 
 ### Backend Setup
 
@@ -63,8 +69,15 @@ npm install
 
 # Erstelle .env Datei
 cp .env.example .env
-# Füge deinen OpenAI API Key in .env hinzu
-# OPENAI_API_KEY=your-key-here
+
+# Füge deinen API Key in .env hinzu:
+# Für Gemini (empfohlen):
+# GEMINI_API_KEY=your-gemini-api-key-here
+# AI_PROVIDER=gemini
+
+# Oder für OpenAI:
+# OPENAI_API_KEY=your-openai-key-here
+# AI_PROVIDER=openai
 
 # Starte den Server
 npm start
@@ -172,19 +185,32 @@ Rezepte/
 
 ## 🔧 Konfiguration
 
-### Demo-Modus
-Die App läuft standardmäßig im Demo-Modus mit Mock-Daten. Für die Produktionsnutzung:
+### KI-Provider Setup
 
-1. Füge einen gültigen OpenAI API Key in `.env` hinzu
-2. Implementiere die Social-Media-API-Integration (TikTok/Instagram)
-3. Optional: Wechsle zu einer echten Datenbank (MongoDB)
+Die App unterstützt sowohl Google Gemini als auch OpenAI:
+
+**Option 1: Google Gemini (Empfohlen)**
+1. Erstelle einen API Key bei [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Füge den Key in `.env` hinzu: `GEMINI_API_KEY=dein-key`
+3. Setze `AI_PROVIDER=gemini`
+
+**Option 2: OpenAI**
+1. Erstelle einen API Key bei [OpenAI](https://platform.openai.com/api-keys)
+2. Füge den Key in `.env` hinzu: `OPENAI_API_KEY=sk-...`
+3. Setze `AI_PROVIDER=openai`
+
+**Demo-Modus**: Ohne API Keys verwendet die App Mock-Daten.
 
 ### Umgebungsvariablen
 
 ```env
 PORT=3001
-OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=your-gemini-api-key-here
+AI_PROVIDER=gemini
 NODE_ENV=development
+
+# Optional: OpenAI als Fallback
+OPENAI_API_KEY=sk-...
 ```
 
 ## 🚧 Produktions-Hinweise

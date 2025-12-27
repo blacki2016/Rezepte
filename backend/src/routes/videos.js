@@ -36,8 +36,14 @@ router.post('/process', async (req, res) => {
     
     let videoInfo;
     let audioPath = null;
+    let transcript = '';
+    let recipe = null;
     
     try {
+      // First, try to get video info (title, description) - this is faster
+      const videoMetaInfo = await videoProcessing.getVideoInfo(url);
+      console.log('Video info retrieved:', videoMetaInfo?.title);
+      
       // Download and process video
       if (platform === 'tiktok') {
         videoInfo = await videoProcessing.processTikTokVideo(url);
@@ -48,7 +54,22 @@ router.post('/process', async (req, res) => {
       audioPath = videoInfo.audioPath;
       
       // Process audio and extract recipe
-      const { transcript, recipe } = await aiService.processVideoForRecipe(audioPath);
+      const result = await aiService.processVideoForRecipe(audioPath);
+      transcript = result.transcript;
+      recipe = result.recipe;
+      
+      // Enhance recipe with video metadata if available
+      if (videoMetaInfo) {
+        if (!recipe.title || recipe.title === 'Pasta Carbonara') {
+          // If recipe title is generic, try to use video title
+          recipe.title = videoMetaInfo.title || recipe.title;
+        }
+        recipe.videoMetadata = {
+          title: videoMetaInfo.title,
+          description: videoMetaInfo.description,
+          uploader: videoMetaInfo.uploader
+        };
+      }
 
       // Add source information to recipe
       recipe.source = {
@@ -73,7 +94,8 @@ router.post('/process', async (req, res) => {
         videoInfo: {
           platform: videoInfo.platform,
           url: videoInfo.url,
-          duration: videoInfo.metadata?.duration
+          duration: videoInfo.metadata?.duration,
+          title: videoMetaInfo?.title
         },
         transcript,
         recipe: savedRecipe
