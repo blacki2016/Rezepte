@@ -4,6 +4,8 @@ const router = express.Router();
 // In-memory storage for meal plans
 let mealPlans = [];
 let shoppingLists = [];
+let nextMealId = 1;
+let nextShoppingId = 1;
 
 // Get all meal plans
 router.get('/meals', (req, res) => {
@@ -15,7 +17,7 @@ router.post('/meals', (req, res) => {
   const { date, mealType, recipeId, recipeName } = req.body;
   
   const newMeal = {
-    id: Date.now(),
+    id: nextMealId++,
     date,
     mealType, // breakfast, lunch, dinner, snack
     recipeId,
@@ -64,7 +66,7 @@ router.post('/shopping-list', (req, res) => {
   const { item, quantity, category } = req.body;
   
   const newItem = {
-    id: Date.now(),
+    id: nextShoppingId++,
     item,
     quantity: quantity || '',
     category: category || 'Other',
