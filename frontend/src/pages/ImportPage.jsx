@@ -10,6 +10,7 @@ function ImportPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [errorDetails, setErrorDetails] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -17,19 +18,25 @@ function ImportPage() {
     
     if (!url) {
       setError('Bitte gib eine Video-URL ein');
+      setErrorDetails('');
       return;
     }
 
     setLoading(true);
     setError('');
+    setErrorDetails('');
     setResult(null);
 
     try {
       const response = await videoAPI.processUrl(url, platform);
       setResult(response.data);
       setError('');
+      setErrorDetails('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Fehler beim Verarbeiten des Videos');
+      const errorMessage = err.response?.data?.error || 'Fehler beim Verarbeiten des Videos';
+      const details = err.response?.data?.details || '';
+      setError(errorMessage);
+      setErrorDetails(details);
       setResult(null);
     } finally {
       setLoading(false);
@@ -113,7 +120,10 @@ function ImportPage() {
             {error && (
               <div className="alert alert-error">
                 <AlertCircle size={20} />
-                <span>{error}</span>
+                <div>
+                  <strong>{error}</strong>
+                  {errorDetails && <p className="text-sm mt-1">{errorDetails}</p>}
+                </div>
               </div>
             )}
 
@@ -143,27 +153,32 @@ function ImportPage() {
             </div>
 
             <div className="info-card card">
-              <h3>Demo-Modus</h3>
+              <h3>🚀 Jetzt mit echtem Video-Download!</h3>
               <p>
-                Diese Demo-Version zeigt, wie die App funktionieren würde. 
-                Da TikTok und Instagram API-Zugriff erfordern, wird ein 
-                Beispiel-Rezept generiert.
+                Die App verwendet yt-dlp um Videos direkt von TikTok und Instagram 
+                herunterzuladen und zu verarbeiten.
               </p>
               <p className="text-sm text-gray mt-2">
-                In der Produktionsversion würde die App:
+                Die App kann nun:
               </p>
               <ul className="text-sm text-gray">
-                <li>Das Video von der URL herunterladen</li>
-                <li>Audio aus dem Video extrahieren</li>
-                <li>Audio mit Whisper API transkribieren</li>
-                <li>Rezept mit GPT-4 aus dem Transkript extrahieren</li>
+                <li>✅ Das Video automatisch von der URL herunterladen</li>
+                <li>✅ Audio aus dem Video extrahieren</li>
+                <li>✅ Audio transkribieren (mit OpenAI Whisper)</li>
+                <li>✅ Rezept mit Google Gemini oder GPT-4 extrahieren</li>
+                <li>✅ Fallback auf Video-Titel/Beschreibung bei Bedarf</li>
               </ul>
+              <p className="text-sm text-gray mt-2">
+                <strong>Hinweis:</strong> Du benötigst einen Google Gemini API Key 
+                (empfohlen) oder OpenAI API Key für die volle Funktionalität.
+              </p>
             </div>
 
             <div className="info-card card">
               <h3>Tipps</h3>
               <ul>
-                <li>Wähle Videos mit klarer Audio-Qualität</li>
+                <li>Verwende öffentlich zugängliche Videos</li>
+                <li>Videos mit klarer Audio-Qualität funktionieren am besten</li>
                 <li>Videos sollten deutliche Rezeptanweisungen enthalten</li>
                 <li>Du kannst das extrahierte Rezept später bearbeiten</li>
               </ul>

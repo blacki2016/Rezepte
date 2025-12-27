@@ -90,6 +90,28 @@ class VideoProcessingService {
   }
 
   /**
+   * Validate TikTok URL
+   */
+  isValidTikTokUrl(url) {
+    const tiktokPatterns = [
+      /^https?:\/\/(www\.|vm\.)?tiktok\.com\/.+/i,
+      /^https?:\/\/(www\.)?tiktok\.com\/@.+\/video\/.+/i
+    ];
+    return tiktokPatterns.some(pattern => pattern.test(url));
+  }
+
+  /**
+   * Validate Instagram URL
+   */
+  isValidInstagramUrl(url) {
+    const instagramPatterns = [
+      /^https?:\/\/(www\.)?instagram\.com\/reel\/.+/i,
+      /^https?:\/\/(www\.)?instagram\.com\/p\/.+/i
+    ];
+    return instagramPatterns.some(pattern => pattern.test(url));
+  }
+
+  /**
    * Get video information including title and description
    */
   async getVideoInfo(url) {

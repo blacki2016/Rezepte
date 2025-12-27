@@ -32,6 +32,21 @@ router.post('/process', async (req, res) => {
       });
     }
 
+    // Validate platform-specific URL format
+    if (platform === 'tiktok' && !videoProcessing.isValidTikTokUrl(url)) {
+      return res.status(400).json({
+        error: 'Invalid TikTok URL. Please use a valid TikTok video link.',
+        example: 'https://www.tiktok.com/@username/video/1234567890'
+      });
+    }
+
+    if (platform === 'instagram' && !videoProcessing.isValidInstagramUrl(url)) {
+      return res.status(400).json({
+        error: 'Invalid Instagram URL. Please use a valid Instagram Reel or Post link.',
+        example: 'https://www.instagram.com/reel/ABC123xyz/'
+      });
+    }
+
     console.log(`Processing ${platform} video from URL: ${url}`);
     
     let videoInfo;
@@ -112,9 +127,22 @@ router.post('/process', async (req, res) => {
     }
   } catch (error) {
     console.error('Video processing error:', error);
+    
+    // Provide more helpful error messages
+    let errorMessage = error.message;
+    let errorDetails = 'Failed to process video. Please try again.';
+    
+    if (error.message.includes('yt-dlp')) {
+      errorDetails = 'Unable to download video. The video might be private, deleted, or the URL is incorrect.';
+    } else if (error.message.includes('ffmpeg')) {
+      errorDetails = 'Failed to extract audio from video.';
+    } else if (error.message.includes('API')) {
+      errorDetails = 'AI service error. Please check API configuration.';
+    }
+    
     res.status(500).json({ 
-      error: error.message,
-      details: 'Failed to process video. Make sure the URL is valid and the video is accessible.'
+      error: errorMessage,
+      details: errorDetails
     });
   }
 });
