@@ -1,16 +1,37 @@
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
 
 class AIService {
   constructor() {
-    // Only initialize OpenAI if API key is provided
+    // Determine which AI provider to use (defaults to gemini)
+    this.aiProvider = process.env.AI_PROVIDER || 'gemini';
+    
+    // Initialize OpenAI if API key is provided
     if (process.env.OPENAI_API_KEY) {
       this.openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY
       });
+      console.log('OpenAI initialized');
     } else {
-      console.warn('OpenAI API key not found. Using mock data for demo purposes.');
+      console.warn('OpenAI API key not found. OpenAI features will not be available.');
       this.openai = null;
+    }
+    
+    // Initialize Gemini if API key is provided
+    if (process.env.GEMINI_API_KEY) {
+      this.gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      this.geminiModel = this.gemini.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      console.log('Gemini initialized');
+    } else {
+      console.warn('Gemini API key not found. Gemini features will not be available.');
+      this.gemini = null;
+      this.geminiModel = null;
+    }
+    
+    // Check if any AI provider is available
+    if (!this.openai && !this.geminiModel) {
+      console.warn('No AI API keys configured. Using mock data for demo purposes.');
     }
   }
 
@@ -42,17 +63,86 @@ class AIService {
   }
 
   /**
-   * Extract recipe information from transcript using GPT
+   * Extract recipe information from transcript using GPT or Gemini
    */
   async extractRecipeFromTranscript(transcript) {
-    // Use mock data if OpenAI is not available
-    if (!this.openai) {
-      console.log('Using mock recipe (OpenAI API key not configured)');
-      return this.getMockRecipe();
+    // Try Gemini first if available and configured as provider
+    if (this.geminiModel && this.aiProvider === 'gemini') {
+      try {
+        return await this.extractRecipeWithGemini(transcript);
+      } catch (error) {
+        console.error('Gemini recipe extraction error:', error);
+        // Fall back to OpenAI if available
+        if (this.openai) {
+          console.log('Falling back to OpenAI...');
+          return await this.extractRecipeWithOpenAI(transcript);
+        }
+      }
     }
+    
+    // Try OpenAI if available
+    if (this.openai) {
+      try {
+        return await this.extractRecipeWithOpenAI(transcript);
+      } catch (error) {
+        console.error('OpenAI recipe extraction error:', error);
+      }
+    }
+    
+    // Fallback to mock data
+    console.log('Using mock recipe (no AI provider succeeded)');
+    return this.getMockRecipe();
+  }
+  
+  /**
+   * Extract recipe using Gemini API
+   */
+  async extractRecipeWithGemini(transcript) {
+    const prompt = `
+Analysiere den folgenden Text aus einem Koch-Video und extrahiere die Rezeptinformationen.
+Erstelle ein strukturiertes Rezept im JSON-Format mit folgenden Feldern:
+- title: Titel des Rezepts
+- description: Kurze Beschreibung (1-2 Sätze)
+- prepTime: Zubereitungszeit in Minuten (nur die Zahl)
+- cookTime: Kochzeit in Minuten (nur die Zahl)
+- servings: Anzahl der Portionen (nur die Zahl)
+- difficulty: Schwierigkeitsgrad (einfach, mittel, oder schwer)
+- ingredients: Array von Zutaten mit "amount" (Menge), "unit" (Einheit), "item" (Zutat)
+- instructions: Array von Schritten mit "step" (Nummer) und "text" (Anweisung)
+- tags: Array von relevanten Tags
+- category: Kategorie (z.B. Hauptgericht, Dessert, Vorspeise, Snack, Getränk)
 
-    try {
-      const prompt = `
+Transcript:
+${transcript}
+
+Antworte NUR mit dem JSON-Objekt, ohne zusätzliche Erklärungen, Markdown-Formatierung oder Code-Blöcke.
+`;
+
+    const result = await this.geminiModel.generateContent(prompt);
+    const response = await result.response;
+    let recipeText = response.text();
+    
+    // Clean up the response - remove markdown code blocks if present at start/end
+    recipeText = recipeText.trim();
+    if (recipeText.startsWith('```json')) {
+      recipeText = recipeText.substring(7); // Remove ```json
+    } else if (recipeText.startsWith('```')) {
+      recipeText = recipeText.substring(3); // Remove ```
+    }
+    if (recipeText.endsWith('```')) {
+      recipeText = recipeText.substring(0, recipeText.length - 3); // Remove trailing ```
+    }
+    recipeText = recipeText.trim();
+    
+    const recipe = JSON.parse(recipeText);
+    return recipe;
+  }
+  
+  /**
+   * Extract recipe using OpenAI API
+   */
+  async extractRecipeWithOpenAI(transcript) {
+    const prompt = `
 Analysiere den folgenden Text aus einem Koch-Video und extrahiere die Rezeptinformationen.
 Erstelle ein strukturiertes Rezept im JSON-Format mit folgenden Feldern:
 - title: Titel des Rezepts
@@ -92,11 +182,6 @@ Antworte nur mit dem JSON-Objekt, ohne zusätzliche Erklärungen.
       const recipe = JSON.parse(recipeText);
       
       return recipe;
-    } catch (error) {
-      console.error('Recipe extraction error:', error);
-      // Fallback for demo purposes
-      return this.getMockRecipe();
-    }
   }
 
   /**
@@ -145,6 +230,60 @@ Mit Pfeffer würzen und sofort servieren.
       tags: ['Pasta', 'Italienisch', 'Hauptgericht', 'Schnell'],
       category: 'Hauptgericht'
     };
+  }
+
+  /**
+   * Extract recipe from video description/title
+   * Useful as a fallback when audio transcription is not available
+   */
+  async extractRecipeFromDescription(title, description) {
+    const combinedText = `Titel: ${title}\n\nBeschreibung: ${description}`;
+    
+    // Use Gemini or OpenAI to extract recipe from description
+    if (this.geminiModel && this.aiProvider === 'gemini') {
+      try {
+        const prompt = `
+Extrahiere ein Rezept aus dem folgenden Video-Titel und der Beschreibung.
+Wenn nicht genug Informationen vorhanden sind, erstelle ein plausibles Rezept basierend auf dem Kontext.
+
+${combinedText}
+
+Erstelle ein strukturiertes Rezept im JSON-Format mit:
+- title, description, prepTime, cookTime, servings, difficulty
+- ingredients: Array mit "amount", "unit", "item"
+- instructions: Array mit "step" und "text"
+- tags und category
+
+Antworte NUR mit dem JSON-Objekt.
+`;
+        const result = await this.geminiModel.generateContent(prompt);
+        const response = await result.response;
+        let recipeText = response.text().replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        return JSON.parse(recipeText);
+      } catch (error) {
+        console.error('Error extracting recipe from description with Gemini:', error);
+      }
+    }
+    
+    if (this.openai) {
+      try {
+        const prompt = `Extrahiere ein Rezept aus: ${combinedText}\n\nAntworte nur mit JSON.`;
+        const completion = await this.openai.chat.completions.create({
+          model: 'gpt-4',
+          messages: [
+            { role: 'system', content: 'Extrahiere Rezeptinformationen aus Texten als JSON.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 2000
+        });
+        return JSON.parse(completion.choices[0].message.content);
+      } catch (error) {
+        console.error('Error extracting recipe from description with OpenAI:', error);
+      }
+    }
+    
+    return null;
   }
 
   /**
