@@ -32,47 +32,68 @@ router.post('/process', async (req, res) => {
       });
     }
 
-    // For demo purposes, we'll use mock data
-    // In production, you would:
-    // 1. Validate URL is from allowed domains (tiktok.com, instagram.com)
-    // 2. Download the video from TikTok/Instagram
-    // 3. Extract audio from the video
-    // 4. Transcribe the audio
-    // 5. Use AI to extract recipe information
+    console.log(`Processing ${platform} video from URL: ${url}`);
     
     let videoInfo;
-    if (platform === 'tiktok') {
-      videoInfo = await videoProcessing.processTikTokVideo(url);
-    } else if (platform === 'instagram') {
-      videoInfo = await videoProcessing.processInstagramReel(url);
-    } else {
-      return res.status(400).json({ 
-        error: 'Platform must be either "tiktok" or "instagram"' 
+    let audioPath = null;
+    
+    try {
+      // Download and process video
+      if (platform === 'tiktok') {
+        videoInfo = await videoProcessing.processTikTokVideo(url);
+      } else if (platform === 'instagram') {
+        videoInfo = await videoProcessing.processInstagramReel(url);
+      }
+      
+      audioPath = videoInfo.audioPath;
+      
+      // Process audio and extract recipe
+      const { transcript, recipe } = await aiService.processVideoForRecipe(audioPath);
+
+      // Add source information to recipe
+      recipe.source = {
+        platform,
+        url,
+        processedAt: new Date().toISOString()
+      };
+
+      // Save recipe to store
+      const savedRecipe = RecipeStore.create(recipe);
+      
+      // Clean up temporary files
+      if (videoInfo.videoPath) {
+        videoProcessing.cleanup(videoInfo.videoPath);
+      }
+      if (audioPath) {
+        videoProcessing.cleanup(audioPath);
+      }
+
+      res.json({
+        message: 'Video processed successfully',
+        videoInfo: {
+          platform: videoInfo.platform,
+          url: videoInfo.url,
+          duration: videoInfo.metadata?.duration
+        },
+        transcript,
+        recipe: savedRecipe
       });
+    } catch (error) {
+      // Clean up files on error
+      if (audioPath) {
+        videoProcessing.cleanup(audioPath);
+      }
+      if (videoInfo?.videoPath) {
+        videoProcessing.cleanup(videoInfo.videoPath);
+      }
+      throw error;
     }
-
-    // For demo, use mock recipe
-    const { transcript, recipe } = await aiService.processVideoForRecipe(null);
-
-    // Add source information to recipe
-    recipe.source = {
-      platform,
-      url,
-      processedAt: new Date().toISOString()
-    };
-
-    // Save recipe to store
-    const savedRecipe = RecipeStore.create(recipe);
-
-    res.json({
-      message: 'Video processed successfully',
-      videoInfo,
-      transcript,
-      recipe: savedRecipe
-    });
   } catch (error) {
     console.error('Video processing error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: error.message,
+      details: 'Failed to process video. Make sure the URL is valid and the video is accessible.'
+    });
   }
 });
 

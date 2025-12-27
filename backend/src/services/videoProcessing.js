@@ -4,6 +4,7 @@ import ffmpegStatic from 'ffmpeg-static';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import ytDlpExec from 'yt-dlp-exec';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -92,32 +93,93 @@ class VideoProcessingService {
    * Process TikTok video URL
    */
   async processTikTokVideo(url) {
-    // Note: In production, you'd need to use TikTok API or a service like yt-dlp
-    // For now, this is a placeholder that assumes you have the video URL
-    const filename = `tiktok_${Date.now()}.mp4`;
-    
-    return {
-      platform: 'tiktok',
-      url,
-      filename,
-      note: 'TikTok video processing requires API access or third-party tools'
-    };
+    try {
+      console.log('Processing TikTok video:', url);
+      const filename = `tiktok_${Date.now()}.mp4`;
+      const videoPath = path.join(this.tempDir, filename);
+      
+      // Download video using yt-dlp
+      await ytDlpExec(url, {
+        output: videoPath,
+        format: 'best',
+        noCheckCertificates: true,
+        noWarnings: true,
+        preferFreeFormats: true,
+        addHeader: [
+          'referer:https://www.tiktok.com/',
+          'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        ]
+      });
+      
+      // Get video metadata
+      const metadata = await this.getVideoMetadata(videoPath);
+      
+      // Extract audio
+      const audioPath = await this.extractAudio(videoPath);
+      
+      console.log('TikTok video processed successfully');
+      
+      return {
+        platform: 'tiktok',
+        url,
+        videoPath,
+        audioPath,
+        filename,
+        metadata: {
+          duration: metadata.format?.duration || 0,
+          size: metadata.format?.size || 0
+        }
+      };
+    } catch (error) {
+      console.error('Error processing TikTok video:', error);
+      throw new Error(`Failed to process TikTok video: ${error.message}`);
+    }
   }
 
   /**
    * Process Instagram Reel URL
    */
   async processInstagramReel(url) {
-    // Note: In production, you'd need to use Instagram API or a service like yt-dlp
-    // For now, this is a placeholder that assumes you have the video URL
-    const filename = `instagram_${Date.now()}.mp4`;
-    
-    return {
-      platform: 'instagram',
-      url,
-      filename,
-      note: 'Instagram Reel processing requires API access or third-party tools'
-    };
+    try {
+      console.log('Processing Instagram Reel:', url);
+      const filename = `instagram_${Date.now()}.mp4`;
+      const videoPath = path.join(this.tempDir, filename);
+      
+      // Download video using yt-dlp
+      await ytDlpExec(url, {
+        output: videoPath,
+        format: 'best',
+        noCheckCertificates: true,
+        noWarnings: true,
+        preferFreeFormats: true,
+        addHeader: [
+          'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        ]
+      });
+      
+      // Get video metadata
+      const metadata = await this.getVideoMetadata(videoPath);
+      
+      // Extract audio
+      const audioPath = await this.extractAudio(videoPath);
+      
+      console.log('Instagram Reel processed successfully');
+      
+      return {
+        platform: 'instagram',
+        url,
+        videoPath,
+        audioPath,
+        filename,
+        metadata: {
+          duration: metadata.format?.duration || 0,
+          size: metadata.format?.size || 0
+        }
+      };
+    } catch (error) {
+      console.error('Error processing Instagram Reel:', error);
+      throw new Error(`Failed to process Instagram Reel: ${error.message}`);
+    }
   }
 }
 
