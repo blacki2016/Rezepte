@@ -57,7 +57,7 @@ function ImportPage() {
           <div className="import-form-container card">
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label htmlFor="platform">Platform auswählen</label>
+                <label htmlFor="platform">Plattform auswählen</label>
                 <div className="platform-selector">
                   <button
                     type="button"

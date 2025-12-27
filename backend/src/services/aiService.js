@@ -3,15 +3,27 @@ import fs from 'fs';
 
 class AIService {
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || 'your-api-key-here'
-    });
+    // Only initialize OpenAI if API key is provided
+    if (process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+    } else {
+      console.warn('OpenAI API key not found. Using mock data for demo purposes.');
+      this.openai = null;
+    }
   }
 
   /**
    * Transcribe audio to text using Whisper API
    */
   async transcribeAudio(audioPath) {
+    // Use mock data if OpenAI is not available
+    if (!this.openai) {
+      console.log('Using mock transcription (OpenAI API key not configured)');
+      return this.getMockTranscription();
+    }
+
     try {
       const audioFile = fs.createReadStream(audioPath);
       
@@ -33,6 +45,12 @@ class AIService {
    * Extract recipe information from transcript using GPT
    */
   async extractRecipeFromTranscript(transcript) {
+    // Use mock data if OpenAI is not available
+    if (!this.openai) {
+      console.log('Using mock recipe (OpenAI API key not configured)');
+      return this.getMockRecipe();
+    }
+
     try {
       const prompt = `
 Analysiere den folgenden Text aus einem Koch-Video und extrahiere die Rezeptinformationen.

@@ -126,7 +126,7 @@ function RecipesPage() {
                   {recipe.prepTime && (
                     <div className="meta-item">
                       <Clock size={16} />
-                      <span>{recipe.prepTime + (recipe.cookTime || 0)} Min</span>
+                      <span>{Number(recipe.prepTime) + Number(recipe.cookTime || 0)} Min</span>
                     </div>
                   )}
                   {recipe.servings && (
